@@ -10,10 +10,12 @@ namespace WebAPIDemo.Controllers
     public class BooksController : ControllerBase
     {
         private readonly IBookProvider _bookProvider;
+        private readonly ILogger<BooksController> _logger;
 
         public BooksController(IBookProvider bookProvider, ILogger<BooksController> logger)
         {
             _bookProvider = bookProvider ?? throw new ArgumentNullException(nameof(bookProvider));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -25,6 +27,7 @@ namespace WebAPIDemo.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
         {
+            _logger.LogInformation("Getting all books");
             var books = await _bookProvider.GetAllBooksAsync();
             return Ok(books);
         }
@@ -41,10 +44,12 @@ namespace WebAPIDemo.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
+            _logger.LogInformation("Getting book with ID: {BookId}", id);
             var book = await _bookProvider.GetBookByIdAsync(id);
 
             if (book == null)
             {
+                _logger.LogWarning("Book with ID {BookId} not found", id);
                 return NotFound($"Book with ID {id} not found");
             }
 
@@ -67,9 +72,10 @@ namespace WebAPIDemo.Controllers
         {
             if (string.IsNullOrWhiteSpace(author))
             {
+                _logger.LogWarning("Author search parameter is empty");
                 return BadRequest("Author parameter cannot be empty");
             }
-
+            _logger.LogInformation("Searching books by author: {Author}", author);
             var books = await _bookProvider.GetBooksByAuthorAsync(author);
             if (books.Count() == 0) return NotFound();
             return Ok(books);
@@ -91,9 +97,10 @@ namespace WebAPIDemo.Controllers
         {
             if (string.IsNullOrWhiteSpace(genre))
             {
+                _logger.LogWarning("Genre search parameter is empty");
                 return BadRequest("Genre parameter cannot be empty");
             }
-
+            _logger.LogInformation("Searching books by genre: {Genre}", genre);
             var books = await _bookProvider.GetBooksByGenreAsync(genre);
             if (books.Count() == 0) return NotFound();
             return Ok(books);
@@ -115,9 +122,10 @@ namespace WebAPIDemo.Controllers
         {
             if (string.IsNullOrWhiteSpace(title))
             {
+                _logger.LogWarning("Title search parameter is empty");
                 return BadRequest("Title parameter cannot be empty");
             }
-
+            _logger.LogInformation("Searching books by title: {Title}", title);
             var books = await _bookProvider.GetBooksByTitleAsync(title);
             if (books.Count() == 0) return NotFound();
             return Ok(books);
@@ -137,6 +145,7 @@ namespace WebAPIDemo.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("Create book failed: Model state is invalid");
                 return BadRequest(ModelState);
             }
 
@@ -146,20 +155,19 @@ namespace WebAPIDemo.Controllers
                 book.Id = 0;
 
                 var createdBook = await _bookProvider.AddBookAsync(book);
+                _logger.LogInformation("Book created successfully with ID: {BookId}", createdBook.Id);
 
                 return CreatedAtAction(
                     nameof(GetBook),
                     new { id = createdBook.Id },
                     createdBook);
             }
-            catch (ArgumentException ex)
+            catch (Exception ex)
             {
+                _logger.LogWarning("Create book failed: {ErrorMessage}", ex.Message);
                 return BadRequest(ex.Message);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+
         }
 
         /// <summary>
@@ -184,6 +192,7 @@ namespace WebAPIDemo.Controllers
 
             if (id != book.Id)
             {
+                _logger.LogWarning("Update book failed: ID mismatch. Route ID: {RouteId}, Book ID: {BookId}", id, book.Id);
                 return BadRequest("ID in route does not match ID in book data");
             }
 
@@ -192,17 +201,15 @@ namespace WebAPIDemo.Controllers
                 var updatedBook = await _bookProvider.UpdateBookAsync(book);
                 if (updatedBook == null)
                 {
+                    _logger.LogWarning("Update book failed: Book with ID {BookId} not found", id);
                     return NotFound($"Book with ID {id} not found");
                 }
-
+                _logger.LogInformation("Book with ID {BookId} updated successfully", id);
                 return NoContent();
             }
-            catch (ArgumentException ex)
+            catch (Exception ex)
             {
-                return BadRequest(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
+                _logger.LogWarning("Update book failed: {ErrorMessage}", ex.Message);
                 return BadRequest(ex.Message);
             }
         }
@@ -222,9 +229,10 @@ namespace WebAPIDemo.Controllers
             var result = await _bookProvider.DeleteBookAsync(id);
             if (!result)
             {
+                _logger.LogWarning("Delete book failed: Book with ID {BookId} not found", id);
                 return NotFound($"Book with ID {id} not found");
             }
-
+            _logger.LogInformation("Book with ID {BookId} deleted successfully", id);
             return NoContent();
         }
     }
