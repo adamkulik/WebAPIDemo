@@ -8,6 +8,7 @@ namespace WebAPIDemo.Providers
         Task<Book?> GetBookByIdAsync(int id);
         Task<IEnumerable<Book>> GetBooksByAuthorAsync(string author);
         Task<IEnumerable<Book>> GetBooksByGenreAsync(string genre);
+        Task<IEnumerable<Book>> GetBooksByTitleAsync(string title);
         Task<Book> AddBookAsync(Book book);
         Task<Book?> UpdateBookAsync(Book book);
         Task<bool> DeleteBookAsync(int id);

@@ -72,4 +72,5 @@ namespace WebAPIDemo.Providers
                 }
             };
         }
+    }
 }
