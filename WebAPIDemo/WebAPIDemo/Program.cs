@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.OpenApi.Models;
+using WebAPIDemo.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,8 @@ builder.Services.AddSwaggerGen(c =>
         c.IncludeXmlComments(xmlPath);
     }
 });
+builder.Services.AddSingleton<IBookProvider, SampleBookProvider>();
+
 
 var app = builder.Build();
 

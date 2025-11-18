@@ -6,7 +6,7 @@ namespace WebAPIDemo.Providers
     {
         public SampleBookProvider() : base(GenerateSampleBooks())
         {
-
+            _nextId = 9;
         }
 
 
